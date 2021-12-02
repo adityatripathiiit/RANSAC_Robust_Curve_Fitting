@@ -1,82 +1,88 @@
-# Image Denoising ⭐
+# Robust Regression for Curve Fitting ⭐
 
-One of the fundamental challenges in the field of image processing and computer vision is image denoising, where the underlying goal is to estimate the original image by suppressing noise from a noise-contaminated version of the image. Image noise may be caused by different intrinsic (i.e., sensor) and extrinsic (i.e.environment) conditions which are often not possible to avoid in practical situations. Therefore, image denoising plays an important role in a wide range of applications such as image restoration, visual tracking, image registration, image segmentation, and image classification, where obtaining the original image content is crucial for strong performance. While many algorithms have been proposed for the purpose of image denoising, the problem of image noise suppression remains an open challenge, especially in situations where the images are acquired under poor conditions where the noise level is very high. We will be exploring non-local means algorithm for image denoising in this repository.
+Robust regression is a type of regression analysis in robust statistics that is intended to overcome some of the limitations of traditional parametric and non-parametric methods. The goal of regression analysis is to determine the relationship between one or more independent variables and one or more dependent variables. 
+
+Certain commonly used regression methods, such as ordinary least squares, have favourable properties when their underlying assumptions are true, but can produce misleading results when those assumptions are violated; thus, ordinary least squares is said to be not robust to assumptions violations. Least squares estimates for regression models, in particular, are extremely sensitive to outliers. While no precise definition exists, outliers are observations that do not follow the pattern of the other observations. 
+
+This is not normally a problem if the outlier is simply an extreme observation drawn from the tail of a normal distribution; however, if the outlier is the result of non-normal measurement error or some other violation of standard ordinary least squares assumptions, the validity of the regression results is jeopardised if a non-robust regression technique is used.
 
 
-## Non-Local-Means 🔥
+## Regression with RANSAC for Robust curve fitting 🔥
 
-The NLM is a greedy algorithm. We convert the image into a matrix with their color
-values (in this case gray-scale values). The basic idea to denoise an image is to do
-some sort of averaging and restoration of the image. Since considering only a single
-pixel value is error prone, we zoom out a bit to consider a small square around the pixel
-of interest. This small square is called a patch.
-A patch is transformed into a feature vector simply by reshaping it as a vector. It can
-also be interpreted as the coordinates of the central pixel in a high dimensional space
-that describes all the possible image patches.
-Then the distance between similar patches is computed. The denoised value of a given
-pixel is obtained as the weighted average of the other pixels of the image, where the
-weight (or contribution) of each pixel is inversely proportional to the distance between its
-patch and the reference patch of the pixel to denoise.
-Since the above process is computationally of very large running time, we limit the
-similarity search area to a window around the patch. This, in a way, does limit the
-non-locality of the algorithm, but makes it practically possible to use.
+For a given polynomial, \\
+$$y_{i}=\beta_{0}+\beta_{1} x_{i}+\beta_{2} x_{i}^{2}+\cdots+\beta_{m} x_{i}^{m}+\varepsilon_{i}(i=1,2, \ldots, n)$$
 
-### Implementation Details
+we can express it in a form of matrix $\mathbf{X}$, a response vector or $\vec{y}$, a parameter vector $\vec{\beta}$, and a vector $\vec{\varepsilon}$ of random errors. The model can be represented as system of linear equations, i.e.
 
-The following is the stepwise procedure followed for running NLM denoising algorithm
-on the image:
 
-- The image is padded using reflect mode( adding extra boundary around image
-using the color values already present in the image) to create a wrap around
-boundary. This step ensures that we don't go out of bounds while finding window
-and neighbours around particles near the image boundary
 
-- After padding the image, the small window surrounding each pixel is
-precomputed and stored in a 4D matrix to reduce the running complexity. Later,
-the pixels in the small window around any pixel can be found just by indexing the
-4D array properly.
+$$\left[\begin{array}{c}y_{1} \\ y_{2} \\ y_{3} \\ \vdots \\ y_{n}\end{array}\right]=\left[\begin{array}{ccccc}1 & x_{1} & x_{1}^{2} & \ldots & x_{1}^{m} \\ 1 & x_{2} & x_{2}^{2} & \ldots & x_{2}^{m} \\ 1 & x_{3} & x_{3}^{2} & \ldots & x_{3}^{m} \\ \vdots & \vdots & \vdots & \ddots & \vdots \\ 1 & x_{n} & x_{n}^{2} & \ldots & x_{n}^{m}\end{array}\right]\left[\begin{array}{c}\beta_{0} \\ \beta_{1} \\ \beta_{2} \\ \vdots \\ \beta_{m}\end{array}\right]+\left[\begin{array}{c}\varepsilon_{1} \\ \varepsilon_{2} \\ \varepsilon_{3} \\ \vdots \\ \varepsilon_{n}\end{array}\right]$$
 
-- Essentially, the algorithm modifies each pixel value by a weighted average of all
-the other pixels, and the weight values are determined by neighborhood similarity
-using the formulas given in the research paper. For each pixel and patch, similar
-patches are found in the search window, and their weighted averages are taken.
-The search window is limited to some value to reduce the running time of the
-algorithm as explained above.
+$$or$$
 
-### More insight on sigma h, small window and big window parameters
+$$\vec{y}=\mathbf{X} \vec{\beta}+\vec{\varepsilon}$$
 
-- Small window: It is related to the patch size when comparing similar
-neighborhoods. We can't choose a very big patch because all patches will be
-different. We cannot choose a small patch either, otherwise all patches will be
-similar. Therefore, here we take the small window size to be 7.
+For this system, we can calculate $\vec{\beta}$ by using the following formula,
+$$
+\widehat{\vec{\beta}}=\left(\mathbf{X}^{\top} \mathbf{X}\right)^{-1} \mathbf{X}^{\top} \vec{y}
+$$
 
-- Big window: It is related to the big neighborhood to search for patches as
-explained above. The bigger the window the better will be the non-local results,
-but it will have larger computational needs. So, considering optimal tradeoff
-between CPU and accuracy, here we choose Big Window to be 21
+Using **RANSAC**, we want to avoid outliers in our curve fitting, and thus we will calculate multiple $\vec{\beta_i}$s using a set of datapoints. After calculating several $\vec{\beta_i}$ we will find the best value of ${\beta}$ using _least squares_.
 
-- Sigma h: It is the constant used to control patch difference when we calculate
-the weights between patches. It is also closely related to the noise variance
-present on image, and it may depend from pixel to pixel. This parameter will vary
-from image to image
+
+## Implementation Details
+
+### What is Linear Regression?
+
+Linear regression is a linear approach for modelling the relationship between a scalar response and one or more dependent/independent variables. It is a commonly used type of predictive analysis. It attempts to model the relationship between variables by fitting a linear equation to observed data
+
+The aim of any linear regression task is to: 
+
+*   Find out if a set of predictor variables do are able to predict the outcome of a dependent variable decently or not.
+*   Adjust the predictor variables depending on their significance on the dependent variable 
+
+The regression estimates are then used to explain the relationship between one dependent variable and one or more independent variables.  The simplest form of the regression equation is with one dependent and one independent variable. It is defined as y = a*x + b, y is the dependent variable, a, b are the regression coefficients, and x is the dependent variable. 
+
+### Why RANSAC?
+
+Least squares estimates for regression models are extremely sensitive to outliers. These outliers are observations that do not follow the pattern of the other observations. They can be thought of as a noise in some sense, as they are feature defining values in the outcome. If the outliers voilate some of the standard ordinary least squares assumptions, the validity of the regression results is jeopardised. This is where a need for a robus regression arises. 
+
+Random sample consensus (RANSAC) is an iterative method used to estimate parameters of a mathematical model from a set of observed data that contains outlier. It is a robust regression technique in the sense that the outliers does not affect the output of the algorithm. Where as a standard regression technique will produce misleading results.
+
+### How does RANSAC help curve fitting?
+
+
+In layman terms, RANSAC tries to demarcate between the, so-called, inliers (data whose distribution can be explained by some set of model parameters, though may be subject to noise) and outliers (which are data that do not fit the model) by repeatedly and randomly sub-sampling the points from the data. The number of times this step is repeated depends on the stopping probability provided. Firsly model parameters are estimated using the sample points only, and then the entire data is checked, if it fits that model or not. A data point will be consided an outlier if it does not fit the system, even after considering some threshold value. 
+
+By doing so the algorithm will eventually come across the right set of data points, and thus determine the inliers and the outliers along with the correct fit. 
+
+
 
 ## Results :bar_chart:
 
-##### Metrics (MSE and PSNR) obtained for both gaussian filtering, NLM filtering, SkImage NLM filtering and the noisy image for all the 10 images, using some fixed h value (in this case 30)
+### 2nd Order
 
-Note: Better NLM values can be obtained using different salt_and_pepper_h value and gaussian_h_value. These tabulations only consider both h to be equal to 30.
+Beta Values:  [2.47075953 1.82404132 1.17124553]
 
-SNP Noise PSNR            |  SNP Noise MSE
-:-------------------------:|:-------------------------:
-<img src="./images/img_3.png" width="500"> | <img src="./images/img_2.png" width="500">
+Best least square error:  0.20691632256573464
 
+<img src="./images/img_1.png"> 
 
-Gaussian Noise PSNR              |  Gaussian Noise MSE
-:-------------------------:|:-------------------------:
-<img src="./images/img_1.png" width="500"> | <img src="./images/img_4.png" width="500">
+### 3rd Order
 
+Beta Values:  [4.25021829 2.67019555 1.95150951 1.28776297]
 
+Best least square error:  0.7598863911222009
 
+<img src="./images/img_2.png"> 
+
+### 4th Order
+
+Beta Values:  [6.45826409 4.47154354 1.81991654 1.96950278 1.19897157]
+
+Best least square error:  1.0387118261420636
+
+<img src="./images/img_3.png"> 
 
 ## Observations :notebook:
 
