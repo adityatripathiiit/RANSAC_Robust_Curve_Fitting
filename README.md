@@ -7,30 +7,7 @@ Certain commonly used regression methods, such as ordinary least squares, have f
 This is not normally a problem if the outlier is simply an extreme observation drawn from the tail of a normal distribution; however, if the outlier is the result of non-normal measurement error or some other violation of standard ordinary least squares assumptions, the validity of the regression results is jeopardised if a non-robust regression technique is used.
 
 
-## Regression with RANSAC for Robust curve fitting 🔥
-
-For a given polynomial, \\
-$$y_{i}=\beta_{0}+\beta_{1} x_{i}+\beta_{2} x_{i}^{2}+\cdots+\beta_{m} x_{i}^{m}+\varepsilon_{i}(i=1,2, \ldots, n)$$
-
-we can express it in a form of matrix $\mathbf{X}$, a response vector or $\vec{y}$, a parameter vector $\vec{\beta}$, and a vector $\vec{\varepsilon}$ of random errors. The model can be represented as system of linear equations, i.e.
-
-
-
-$$\left[\begin{array}{c}y_{1} \\ y_{2} \\ y_{3} \\ \vdots \\ y_{n}\end{array}\right]=\left[\begin{array}{ccccc}1 & x_{1} & x_{1}^{2} & \ldots & x_{1}^{m} \\ 1 & x_{2} & x_{2}^{2} & \ldots & x_{2}^{m} \\ 1 & x_{3} & x_{3}^{2} & \ldots & x_{3}^{m} \\ \vdots & \vdots & \vdots & \ddots & \vdots \\ 1 & x_{n} & x_{n}^{2} & \ldots & x_{n}^{m}\end{array}\right]\left[\begin{array}{c}\beta_{0} \\ \beta_{1} \\ \beta_{2} \\ \vdots \\ \beta_{m}\end{array}\right]+\left[\begin{array}{c}\varepsilon_{1} \\ \varepsilon_{2} \\ \varepsilon_{3} \\ \vdots \\ \varepsilon_{n}\end{array}\right]$$
-
-$$or$$
-
-$$\vec{y}=\mathbf{X} \vec{\beta}+\vec{\varepsilon}$$
-
-For this system, we can calculate $\vec{\beta}$ by using the following formula,
-$$
-\widehat{\vec{\beta}}=\left(\mathbf{X}^{\top} \mathbf{X}\right)^{-1} \mathbf{X}^{\top} \vec{y}
-$$
-
-Using **RANSAC**, we want to avoid outliers in our curve fitting, and thus we will calculate multiple $\vec{\beta_i}$ s using a set of datapoints. After calculating several $\vec{\beta_i}$ we will find the best value of ${\beta}$ using _least squares_.
-
-
-## Implementation Details
+## Implementation Details 🔥
 
 ### What is Linear Regression?
 
